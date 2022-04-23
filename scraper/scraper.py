@@ -1,8 +1,13 @@
 import time
-from dataclasses import dataclass
+import logging
+from dataclasses import dataclass, field
 from bs4 import BeautifulSoup
 import requests
 import csv
+from rich.table import Table
+
+# get logger
+logger = logging.getLogger("jobgy_logger")
 
 
 @dataclass
@@ -30,11 +35,12 @@ class Job:
 
 
 class Jobsearch:
-    def __init__(self, position, location, radius) -> None:
+    def __init__(self, position, location, radius, console=None) -> None:
         self.pos = position
         self.loc = location
         self.rad = radius
         self.jobs = list()
+        self.console = console
         self.session = requests.Session()
         self.header = {
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36",
@@ -63,8 +69,8 @@ class Jobsearch:
             time.sleep(1)
             soup = BeautifulSoup(response.content, "html.parser")
             if soup.title.text == "hCaptcha solve page":
-                print(
-                    "Server challenged with Captcha beacause of to many accsesses, retry later."
+                self.console.log(
+                    "Server responded with Captcha retry later.", style="red"
                 )
             cards = soup.find_all("a", "tapItem")
 
@@ -124,11 +130,20 @@ class Jobsearch:
                 "site_url",
                 "original_url",
             ]
+
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
             writer.writeheader()
             for item in self.jobs:
                 writer.writerow(item.to_dict())
+
+    def to_console(self, console):
+        table = Table()
+        for fieldname in ["Title", "Location", "Company", "URL"]:
+            table.add_column(fieldname)
+        for item in self.jobs:
+            table.add_row(item.title, item.location, item.company, item.original_url)
+        console.print(table)
 
 
 if __name__ == "__main__":

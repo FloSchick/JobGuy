@@ -9,6 +9,8 @@
 
 **Automated tool for scraping job postings from different Jobportals**
 
+<img src="logo/sample.png" alt="JobGuy Banner" width=900/><br/>
+
 ### Benefits over job search sites:
 
 * Never see the same job twice!

@@ -9,9 +9,12 @@ beautifulsoup4 = "*"
 click = "*"
 rich = "*"
 rich-cli = "*"
+webdriver-manager = "*"
+selenium = "*"
 
 [dev-packages]
 black = "*"
+pytest = "*"
 
 [requires]
 python_version = "3"

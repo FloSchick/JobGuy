@@ -19,8 +19,9 @@ logger.setLevel(logging.INFO)
 @click.option("-r", "--radius", default=25, help="radius of jobsearch in km")
 @click.option("-n", "--nums", default=100, help="number of jobs to gather")
 @click.option("-o", "--output", default="", help="output filename.csv")
+@click.option("-pl", "--p_language", default="", help="filter by programming language")
 @click.argument("title")
-def cli(radius, title, location, output, nums):
+def cli(radius, title, location, output, nums, p_language):
     console = Console()
     # add console to logging handler
     logger.addHandler(RichHandler(console=console))
@@ -28,7 +29,7 @@ def cli(radius, title, location, output, nums):
         console.log(
             f"[cyan]Searching Title: {title}, Location: {location}, Radius: {radius}km"
         )
-        search = Jobsearch(title, location, radius, nums, console)
+        search = Jobsearch(title, location, radius, nums, p_language, console)
         search.scrape_indeed()
         search.to_console(console)
         if output:

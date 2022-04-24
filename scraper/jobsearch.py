@@ -7,8 +7,8 @@ import csv
 from rich.table import Table
 
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.utils import ChromeType
 
 # get logger
 logger = logging.getLogger("jobguy_logger")
@@ -42,13 +42,14 @@ class Job:
 
 
 class Jobsearch:
-    def __init__(self, position, location, radius, nums, console=None) -> None:
+    def __init__(self, position, location, radius, nums, tags, console=None) -> None:
         self.pos = position
         self.loc = location
         self.rad = radius
         self.jobs = list()
         self.console = console
         self.nums = nums
+        self.tags = tags
         self.driver = self.establish_connection()
 
     def establish_connection(self) -> webdriver:
@@ -56,11 +57,14 @@ class Jobsearch:
         options.add_argument("--ignore-certificate-errors")
         options.add_argument("--incognito")
         options.add_argument("--headless")
-        driver = webdriver.Chrome(
-            ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install(),
-            chrome_options=options,
+        driver = driver = webdriver.Chrome(
+            service=Service(ChromeDriverManager(log_level=0).install()), options=options
         )
+        driver.implicitly_wait(10)
         return driver
+
+    def close_connection(self) -> None:
+        self.driver.quit()
 
     def scrape_indeed(self) -> list:
         pos = self.pos.replace(" ", "%20")
@@ -70,7 +74,9 @@ class Jobsearch:
             # wait delay to pervent blacklisting
             time.sleep(2)
             self.driver.get(url)
-            soup = BeautifulSoup(self.driver.page_source, "html.parser")
+            self.driver.find_elements_by_class_name("tapItem")
+            html = self.driver.page_source
+            soup = BeautifulSoup(html, "html.parser")
             # check if response was Captcha
             if soup.title.text == "hCaptcha solve page":
                 logger.error("Server responded with Captcha retry later")
@@ -105,14 +111,14 @@ class Jobsearch:
                 self.jobs.append(job)
                 # exit if job number is reached
                 if len(self.jobs) >= self.nums:
-                    return
+                    return self.close_connection()
             #  if "Weiter" button is missing last page is reached
             try:
                 url = "https://de.indeed.com" + soup.find(
                     "a", {"aria-label": "Weiter"}
                 ).get("href")
             except AttributeError:
-                return
+                return self.close_connection()
 
     def to_csv(self, filename):
         """Prints detected jobs to filepath csv"""
@@ -144,6 +150,6 @@ class Jobsearch:
 
 
 if __name__ == "__main__":
-    search = Jobsearch("Python", "München", "25")
-    search.get_jobs()
+    search = Jobsearch("Python", "München", "25", 2, None)
+    search.scrape_indeed()
     search.to_csv("jobsearch.csv")

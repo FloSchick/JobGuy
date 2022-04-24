@@ -1,15 +1,18 @@
 # JobGuy
+<p align="center">
 <img src="logo/jobguy.png" alt="JobGuy Banner" width=400/><br/>
+<a href="https://www.python.org/"><img src="https://img.shields.io/badge/Made%20with-Python-1f425f.svg" alt="Made with Python"></a>
+<a href="https://pypi.python.org/pypi/ansicolortags//"><img src="https://img.shields.io/pypi/l/ansicolortags.svg" alt="MIT License"></a>
+<a href="https://github.com/psf/black"><img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Code style: black"></a>
+<a href="https://www.python.org/dev/peps/pep-0008/"><img src="https://img.shields.io/badge/code%20style-pep8-orange.svg" alt="PEP8"></a>
+</p>
 
-[![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/)
-[![PyPI license](https://img.shields.io/pypi/l/ansicolortags.svg)](https://pypi.python.org/pypi/ansicolortags/)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![PEP8](https://img.shields.io/badge/code%20style-pep8-orange.svg)](https://www.python.org/dev/peps/pep-0008/)
+
 <hr>
 
-**Automated tool for scraping job postings from different Jobportals**
+**Automated tool for scraping job postings from different Job portals**
 
-<img src="logo/sample.png" alt="JobGuy Banner" width=900/><br/>
+<img src="logo/sample.png" alt="JobGuy Banner" width=1000/><br/>
 
 ### Benefits over job search sites:
 

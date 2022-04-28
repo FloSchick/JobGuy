@@ -3,10 +3,10 @@ import logging
 from bs4 import BeautifulSoup
 from rich.console import Console
 from typing import Optional
-from scraper.base_class import Scraper
+from jobguy.scraper.base_class import Scraper
 
 # custom imports
-from scraper.config import ScraperConfig
+from jobguy.scraper.config import ScraperConfig
 
 # get logger
 logger = logging.getLogger("jobguy_logger")
@@ -18,24 +18,32 @@ class IndeedScraper(Scraper):
     ) -> None:
         Scraper.__init__(self, config)
 
-        # self.mapping = {
-        #     "title": f"q={title}",
-        #     "location": f"l={self.loc}",
-        #     "radius": f"radius={self.rad}",
-        #     "cpp": "sc=0kf%3Aattr(GJUK3)%3B",
-        #     "python": "sc=0kf%3Aattr(X62BT)%3B",
-        # }
-        # self.tags = [self.tag_mapping[t] for t in tags]
+        self.supported_tags = {
+            "cpp": "sc=0kf%3Aattr(GJUK3)%3B",
+            "python": "sc=0kf%3Aattr(X62BT)%3B",
+        }
 
     def __build_url(self) -> str:
         """Get the indeed search url
         TODO: Add other countries setting to config (.com/.uk/...)
         """
-        return "https://www.indeed.de/jobs?q={}&l={}&radius={}&limit={}".format(
+        valid_tags = []
+        for t in self.config.tags:
+            try:
+                valid_tags.append(self.supported_tags[t])
+            except KeyError:
+                logger.warning(f"Tag not supported by indeed: {t}")
+                continue
+        if valid_tags:
+            tag_string = "&".join(valid_tags)
+        else:
+            tag_string = None
+        return "https://www.indeed.de/jobs?q={}&l={}&radius={}&limit={}&{}".format(
             self.config.title.replace(" ", "%20"),
             self.config.location,
             self.config.radius,
             self.config.max_listing_count,
+            tag_string,
         )
 
     def scrape(self) -> list:
@@ -44,8 +52,8 @@ class IndeedScraper(Scraper):
         # iterate over all pages
         while True:
             # wait delay to pervent blacklisting
-            time.sleep(2)
             self.driver.get(url)
+            time.sleep(3)
             self.driver.find_elements_by_class_name("tapItem")
             html = self.driver.page_source
             soup = BeautifulSoup(html, "html.parser")
@@ -53,7 +61,8 @@ class IndeedScraper(Scraper):
             if soup.title.text == "hCaptcha solve page":
                 logger.error("Server responded with Captcha retry later")
             # extract all joblistings
-            cards = soup.find_all("div", {"class": "tapItem"})
+            # cards = soup.find_all("div", {"class": "tapItem"})
+            cards = soup.find_all("div", {"class": "job_seen_beacon"})
             for card in cards:
                 try:
                     title = card.find("h2", "jobTitle").getText().strip()
@@ -72,21 +81,6 @@ class IndeedScraper(Scraper):
                 except AttributeError:
                     job_url = ""
 
-                self.add_result(title, self.loc, company, summary, job_url)
-                # exit if job number is reached
-                if len(self.jobs) >= self.max_count:
-                    return self.close_connection()
-            #  if "Weiter" button is missing last page is reached
-            try:
-                url = "https://de.indeed.com" + soup.find(
-                    "a", {"aria-label": "Weiter"}
-                ).get("href")
-            except AttributeError:
-                return self.close_connection()
+                self.add_result(title, self.config.location, company, summary, job_url)
 
-
-if __name__ == "__main__":
-    conf = ScraperConfig()
-    search = IndeedScraper("Python", "München", "25", 2, ["python", "cpp"], None)
-    search.scrape_indeed()
-    search.to_csv("jobsearch.csv")
+            return self.close_connection()

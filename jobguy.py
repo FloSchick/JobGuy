@@ -8,7 +8,15 @@ from rich.console import Console
 from rich.logging import RichHandler
 
 # custom files
-from scraper.indeed import IndeedScraper
+from jobguy.scraper.indeed import IndeedScraper
+from jobguy.scraper.config import ScraperConfig
+from jobguy.resources.defaults import (
+    DEFAULT_SEARCH_TITLE,
+    DEFAULT_PROVIDERS,
+    DEFAULT_RADIUS,
+    DEFAULT_LOCATION,
+    DEFAULT_NUMS,
+)
 
 # configure logger
 logger = logging.getLogger("jobguy_logger")
@@ -16,14 +24,17 @@ logger.setLevel(logging.INFO)
 
 
 @click.command()
-@click.option("-l", "--location", default="Deutschland", help="job location")
-@click.option("-r", "--radius", default=25, help="radius of jobsearch in km")
+@click.option("-l", "--location", default=DEFAULT_LOCATION, help="job location")
+@click.option("-t", "--title", default=DEFAULT_SEARCH_TITLE, help="jobtitle")
+@click.option("-r", "--radius", default=DEFAULT_RADIUS, help="radius in km")
+@click.option("-n", "--nums", default=DEFAULT_NUMS, help="number of jobs to gather")
+@click.option("-o", "--output", help="output filename.csv")
 @click.option(
-    "-t", "--tags", multiple=True, help="search for specific tags like python or cpp"
+    "-t",
+    "--tags",
+    multiple=True,
+    help="tags like cpp or python",
 )
-@click.option("-n", "--nums", default=100, help="number of jobs to gather")
-@click.option("-o", "--output", default="", help="output filename.csv")
-@click.argument("title")
 def cli(radius, title, location, output, nums, tags):
     """Commandline tool to scrape jobs from different websites"""
     console = Console()
@@ -34,8 +45,15 @@ def cli(radius, title, location, output, nums, tags):
         console.log(
             f"[cyan]Searching Title: {title}, Location: {location}, Radius: {radius}km, Tags: {tags_string}"
         )
-        search = IndeedScraper(title, location, radius, nums, tags, console)
-        # search.scrape_indeed()
+        cfg = ScraperConfig(
+            title=title,
+            providers=DEFAULT_PROVIDERS,
+            location=location,
+            max_listing_count=nums,
+            tags=tags,
+        )
+        search = IndeedScraper(cfg, console)
+        search.scrape()
         search.to_console(console)
         if output:
             search.to_csv(output)

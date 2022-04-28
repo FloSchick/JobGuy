@@ -16,7 +16,7 @@ class ScraperConfig:
         providers: List[Provider],
         location: Optional[str] = None,
         radius: Optional[int] = None,
-        tags: List[str] = None,
+        tags: List[str] = [],
         max_listing_count: Optional[int] = None,
     ) -> None:
         """This object stores all search configurations

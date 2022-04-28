@@ -1,7 +1,6 @@
 """This module implements default scraper class"""
 import csv
 from dataclasses import dataclass, fields
-from abc import ABC, abstractmethod
 from rich.console import Console
 from rich.table import Table
 from selenium import webdriver
@@ -9,7 +8,7 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
 # custom imports
-from scraper.config import ScraperConfig
+from jobguy.scraper.config import ScraperConfig
 
 
 @dataclass(eq=True, order=True, frozen=True)
@@ -40,17 +39,18 @@ class Job:
         return [field.name for field in fields(Job)]
 
 
-class Scraper(ABC):
+class Scraper:
     def __init__(self, config: ScraperConfig) -> None:
         # super().__init__(level=config.log_level, file_path=config.log_file)
         self.driver = self.__establish_connection()
         self.config = config
+        self.jobs = set()
 
     def __establish_connection(self) -> webdriver:
         """connect to chrome session for scraping"""
         options = webdriver.ChromeOptions()
-        options.add_argument("--ignore-certificate-errors")
-        options.add_argument("--incognito")
+        # options.add_argument("--ignore-certificate-errors")
+        # options.add_argument("--incognito")
         # options.add_argument("--headless")
         driver = driver = webdriver.Chrome(
             service=Service(ChromeDriverManager(log_level=0).install()), options=options
@@ -58,7 +58,7 @@ class Scraper(ABC):
         driver.implicitly_wait(10)
         return driver
 
-    def __close_connection(self) -> None:
+    def close_connection(self) -> None:
         """close chrome session"""
         self.driver.quit()
 

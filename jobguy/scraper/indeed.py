@@ -1,19 +1,46 @@
 import time
 import logging
 from bs4 import BeautifulSoup
-from base_class import Scraper, Job
+from rich.console import Console
+from typing import Optional
+from scraper.base_class import Scraper
+
+# custom imports
+from scraper.config import ScraperConfig
 
 # get logger
 logger = logging.getLogger("jobguy_logger")
 
 
 class IndeedScraper(Scraper):
-    def __init__(self, title, location, radius, nums, console=None) -> None:
-        Scraper.__init__(self, title, location, radius, console)
+    def __init__(
+        self, config: ScraperConfig, console: Optional[Console] = None
+    ) -> None:
+        Scraper.__init__(self, config)
 
-    def scrape_indeed(self) -> list:
-        pos = self.pos.replace(" ", "%20")
-        url = f"https://de.indeed.com/Jobs?q={pos}&l={self.loc}&radius={self.rad}"
+        # self.mapping = {
+        #     "title": f"q={title}",
+        #     "location": f"l={self.loc}",
+        #     "radius": f"radius={self.rad}",
+        #     "cpp": "sc=0kf%3Aattr(GJUK3)%3B",
+        #     "python": "sc=0kf%3Aattr(X62BT)%3B",
+        # }
+        # self.tags = [self.tag_mapping[t] for t in tags]
+
+    def __build_url(self) -> str:
+        """Get the indeed search url
+        TODO: Add other countries setting to config (.com/.uk/...)
+        """
+        return "https://www.indeed.de/jobs?q={}&l={}&radius={}&limit={}".format(
+            self.config.title.replace(" ", "%20"),
+            self.config.location,
+            self.config.radius,
+            self.config.max_listing_count,
+        )
+
+    def scrape(self) -> list:
+        url = self.__build_url()
+
         # iterate over all pages
         while True:
             # wait delay to pervent blacklisting
@@ -26,7 +53,7 @@ class IndeedScraper(Scraper):
             if soup.title.text == "hCaptcha solve page":
                 logger.error("Server responded with Captcha retry later")
             # extract all joblistings
-            cards = soup.find_all("a", "tapItem")
+            cards = soup.find_all("div", {"class": "tapItem"})
             for card in cards:
                 try:
                     title = card.find("h2", "jobTitle").getText().strip()
@@ -41,15 +68,13 @@ class IndeedScraper(Scraper):
                 except AttributeError:
                     summary = ""
                 try:
-                    job_url = "https://de.indeed.com" + card["href"]
+                    job_url = "https://de.indeed.com" + card.find("a")["href"]
                 except AttributeError:
                     job_url = ""
 
-                
-
-                self.add_result(title, self.loc, company,summary, job_url, date))
+                self.add_result(title, self.loc, company, summary, job_url)
                 # exit if job number is reached
-                if len(self.jobs) >= self.nums:
+                if len(self.jobs) >= self.max_count:
                     return self.close_connection()
             #  if "Weiter" button is missing last page is reached
             try:
@@ -61,6 +86,7 @@ class IndeedScraper(Scraper):
 
 
 if __name__ == "__main__":
-    search = Jobsearch("Python", "München", "25", 2, None)
+    conf = ScraperConfig()
+    search = IndeedScraper("Python", "München", "25", 2, ["python", "cpp"], None)
     search.scrape_indeed()
     search.to_csv("jobsearch.csv")

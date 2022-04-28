@@ -49,9 +49,10 @@ class Scraper:
     def __establish_connection(self) -> webdriver:
         """connect to chrome session for scraping"""
         options = webdriver.ChromeOptions()
-        # options.add_argument("--ignore-certificate-errors")
-        # options.add_argument("--incognito")
-        # options.add_argument("--headless")
+        options.add_argument("--ignore-certificate-errors")
+        options.add_argument("--incognito")
+        options.add_argument("--headless")
+        options.add_argument("--start-maximized")
         driver = driver = webdriver.Chrome(
             service=Service(ChromeDriverManager(log_level=0).install()), options=options
         )
@@ -79,9 +80,7 @@ class Scraper:
             filename,
             "w",
         ) as csvfile:
-            writer = csv.DictWriter(
-                csvfile, fieldnames=Job.get_fields(), dialect="excel"
-            )
+            writer = csv.DictWriter(csvfile, fieldnames=Job.get_fields())
             writer.writeheader()
             for item in self.jobs:
                 writer.writerow(item.to_dict())
@@ -89,10 +88,17 @@ class Scraper:
     def to_console(self, console: Console) -> None:
         """prints detected jobs as table to console"""
         table = Table()
+        table.add_column("ID")
         for fieldname in Job.get_fields():
+            if fieldname == "summary":
+                continue
             table.add_column(fieldname)
-        for item in self.jobs:
+        for idx, item in enumerate(self.jobs):
             table.add_row(
-                item.title, item.location, item.company, item.summary, item.url
+                str(idx),
+                item.title,
+                item.location,
+                item.company,
+                f"[link={item.url}]Link[/link]",
             )
         console.print(table)

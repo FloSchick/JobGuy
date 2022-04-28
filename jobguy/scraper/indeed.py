@@ -1,4 +1,5 @@
 import time
+import re
 import logging
 from bs4 import BeautifulSoup
 from rich.console import Console
@@ -38,13 +39,14 @@ class IndeedScraper(Scraper):
             tag_string = "&".join(valid_tags)
         else:
             tag_string = None
-        return "https://www.indeed.de/jobs?q={}&l={}&radius={}&limit={}&{}".format(
+        url = "https://www.indeed.de/jobs?q={}&l={}&radius={}&limit=1000&{}".format(
             self.config.title.replace(" ", "%20"),
             self.config.location,
             self.config.radius,
-            self.config.max_listing_count,
             tag_string,
         )
+        logger.debug(f"generated search url: [link={url}]Link[/link]")
+        return url
 
     def scrape(self) -> list:
         url = self.__build_url()
@@ -62,10 +64,17 @@ class IndeedScraper(Scraper):
                 logger.error("Server responded with Captcha retry later")
             # extract all joblistings
             # cards = soup.find_all("div", {"class": "tapItem"})
-            cards = soup.find_all("div", {"class": "job_seen_beacon"})
-            for card in cards:
+            # cards = soup.find_all("div", {"class": "job_seen_beacon"})
+            cards = soup.find_all("div", {"class": "slider_container"})
+            # cards = soup.findAll("a", {"data-jk": re.compile(".*")})
+            ids = [
+                id["data-jk"] for id in soup.findAll("a", {"data-jk": re.compile(".*")})
+            ]
+
+            for id_, card in zip(ids, cards):
                 try:
                     title = card.find("h2", "jobTitle").getText().strip()
+                    # title = card.find("span").getText()
                 except AttributeError:
                     continue
                 try:
@@ -77,10 +86,23 @@ class IndeedScraper(Scraper):
                 except AttributeError:
                     summary = ""
                 try:
-                    job_url = "https://de.indeed.com" + card.find("a")["href"]
-                except AttributeError:
+                    # job_url = "https://de.indeed.com" + card.previous["href"]
+                    job_url = "https://de.indeed.com/viewjob?jk=" + id_
+
+                except TypeError:
                     job_url = ""
 
                 self.add_result(title, self.config.location, company, summary, job_url)
-
-            return self.close_connection()
+                # exit if job number is reached
+                if len(self.jobs) >= self.config.max_listing_count:
+                    return self.close_connection()
+            #  if "Weiter" button is missing last page is reached
+            try:
+                url = "https://de.indeed.com" + soup.find(
+                    "a", {"aria-label": "Weiter"}
+                ).get("href")
+            except AttributeError:
+                logger.debug(
+                    "Early exit, because no further jobs where found to scrape"
+                )
+                return self.close_connection()

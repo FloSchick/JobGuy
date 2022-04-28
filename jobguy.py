@@ -24,18 +24,18 @@ logger.setLevel(logging.INFO)
 
 
 @click.command()
-@click.option("-l", "--location", default=DEFAULT_LOCATION, help="job location")
-@click.option("-t", "--title", default=DEFAULT_SEARCH_TITLE, help="jobtitle")
-@click.option("-r", "--radius", default=DEFAULT_RADIUS, help="radius in km")
-@click.option("-n", "--nums", default=DEFAULT_NUMS, help="number of jobs to gather")
-@click.option("-o", "--output", help="output filename.csv")
+@click.option("-d", "--desc", default=DEFAULT_SEARCH_TITLE, help="job description")
+@click.option("-l", "--loc", default=DEFAULT_LOCATION, help="job location")
+@click.option("-r", "--rad", default=DEFAULT_RADIUS, help="radius in km")
+@click.option("-n", "--max_nums", default=DEFAULT_NUMS, help="number of jobs to gather")
+@click.option("-o", "--output", help="output filename (.csv|.xlsx)")
 @click.option(
     "-t",
     "--tags",
     multiple=True,
     help="tags like cpp or python",
 )
-def cli(radius, title, location, output, nums, tags):
+def cli(radius, desc, location, output, nums, tags):
     """Commandline tool to scrape jobs from different websites"""
     console = Console()
     # add console to logging handler
@@ -43,10 +43,10 @@ def cli(radius, title, location, output, nums, tags):
     with console.status("[bold cyan]Doing internet magic..."):
         tags_string = ", ".join(tags)
         console.log(
-            f"[cyan]Searching Title: {title}, Location: {location}, Radius: {radius}km, Tags: {tags_string}"
+            f"[cyan]Searching Title: {desc}, Location: {location}, Radius: {radius}km, Tags: {tags_string}"
         )
         cfg = ScraperConfig(
-            title=title,
+            title=desc,
             providers=DEFAULT_PROVIDERS,
             location=location,
             max_listing_count=nums,

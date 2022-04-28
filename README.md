@@ -14,36 +14,54 @@
 
 <img src="logo/sample.png" alt="JobGuy Banner" width=1000/><br/>
 
-### Benefits over job search sites:
+### Benefits over job search sites and other scrapers:
 
-* Never see the same job twice!
+* Simple and lightweight with minimal dependencies.
+* No duplicate listings!
 * No advertising.
+* No API Keys needed.
 * See jobs from multiple job search websites all in one place.
-* Use Tagging powered Search.
-* Export Jobs to multiple file formats like `sqlite`, `Excel` and `CSV`.
-* No API keys needed!
+* Use tagging powered search.
+* Export Jobs to multiple file formats like `.xlsx` and `.csv` or just use your terminal.
 
 ### Planned Features 
 * Telegram Notifications for new Jobs
 * Flask powered Web interface
 
 # Installation
-_JobGuy requires 3.8 or later._
+_JobGuy requires Python 3.8 or later._
 
 This project uses pipenv as environment manager. To install pipenv:
 
 ```markdown
 pip install pipenv
 ```
-After successful installation just install all needed packages to a isolated environment:
-
+After successful installation just install all needed packages:
 ```markdown
 pipenv install
 ```
 
 # Usage
+Want to find data science jobs near Berlin?
 
-## Configuration
+    python jobguy.py -d DataScientist -l Berlin
 
-## Scraping
+It's as easy as it gets!
+
+To see all possible options just run: 
+
+    python jobguy.py --help
+
+    Options:
+    -d, --desc TEXT         job description
+    -l, --loc TEXT          job location
+    -r, --rad INTEGER       radius in km
+    -n, --max_nums INTEGER  number of jobs to gather
+    -o, --output TEXT       output filename (.csv|.xlsx)
+    -t, --tags TEXT         tags like cpp or python
+    --help                  Show this message and exit.
+    
+
+
+
 
